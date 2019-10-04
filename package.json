@@ -36,7 +36,8 @@
 	},
 	"devDependencies": {
 		"tap-min": "^2.0.0",
-		"tape": "^4.10.1"
+		"tape": "^4.10.1",
+		"vbb-hafas": "^6.1.0"
 	},
 	"scripts": {
 		"test": "env NODE_ENV=dev node test.js | tap-min",

@@ -43,16 +43,25 @@ const createServer = (baseUrl, hafas, bbox) => {
 	// - /stops/:id
 	// - /trip/:id
 	api.get('/connections', (req, res, next) => {
-		if (!('t' in req.query)) return next(new Error('missing t param'))
-		const when = parseInt(req.query.t) * 1000
+		if (!('t' in req.query)) {
+			const now = (Date.now() / 1000 | 0)
+			res.redirect('/connections?t=' + now)
+			return;
+		}
 
+		const when = parseInt(req.query.t) * 1000
 		// todo: caching headers
 		fetchConnections(when)
 		.then((connections) => {
+			if (connections.length === 0) {
+				// todo: what to do in this case?
+				res.status(404)
+				res.json({})
+			}
+
 			const deps = connections.filter(c => !!c.departure).map(depOf)
 			const tNext = max(deps)
 			const tPrevious = min(deps) - 10 * 60 // todo: find sth better
-			console.error('t', +req.query.t, 'tNext', tNext, 'tPrevious', tPrevious)
 
 			res.json({
 				'@context': jsonLdContext,
@@ -62,11 +71,11 @@ const createServer = (baseUrl, hafas, bbox) => {
 				'hydra:previous': `${baseUrl}/connections?t=${tPrevious}`,
 				'hydra:search': {
 					'@type': 'hydra:IriTemplate',
-					'hydra:template': `${baseUrl}/connections?t={?departureTime}`,
+					'hydra:template': `${baseUrl}/connections{?t}`,
 					'hydra:variableRepresentation': 'hydra:BasicRepresentation',
 					'hydra:mapping': {
 						'@type': 'IriTemplateMapping',
-						'hydra:variable': 'departureTime',
+						'hydra:variable': 't',
 						'hydra:required': true,
 						'hydra:property': 'lc:departureTimeQuery'
 					}

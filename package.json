@@ -27,6 +27,7 @@
 		"date-fns": "^2.4.1",
 		"date-fns-tz": "^1.0.7",
 		"express": "^4.17.1",
+		"hafas-find-stations": "^1.1.0",
 		"hafas-monitor-trips": "^2.1.2",
 		"lodash": "^4.17.15",
 		"p-queue": "^6.1.1"

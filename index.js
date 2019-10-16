@@ -6,6 +6,7 @@ const cors = require('cors')
 const {inspect} = require('util')
 const min = require('lodash/min')
 const max = require('lodash/max')
+const findStops = require('hafas-find-stations')
 const createFetchConnections = require('./lib/network-wide-connections')
 const jsonLdContext = require('./lib/json-ld-context')
 
@@ -23,13 +24,47 @@ const createServer = (baseUrl, hafas, bbox) => {
 	const api = express()
 	api.use(cors())
 
+	const stopUrl = stop => `${baseUrl}/stops/${stop.id}`
+
+	const formatStop = (stop) => ({
+		'@id': stopUrl(stop),
+		// todo: `dct:spatial`
+		latitude: stop.location.latitude + '',
+		longitude: stop.location.longitude + '',
+		name: stop.name
+	})
+
+	api.get('/stops', (req, res, next) => {
+		const p = req.params
+		const _bbox = {
+			north: p.north ? parseFloat(p.north) : bbox.north,
+			west: p.west ? parseFloat(p.west) : bbox.west,
+			south: p.south ? parseFloat(p.south) : bbox.south,
+			east: p.east ? parseFloat(p.east) : bbox.east
+		}
+		console.error('bbox', bbox)
+
+		// todo: put caching
+		findStops(hafas, bbox, () => {})
+		.then((stops) => {
+			res.json({
+				'@context': jsonLdContext,
+				'@id': baseUrl + req.url,
+				'@type': 'hydra:PartialCollectionView',
+				// todo: `hydra:search`
+				'@graph': stops.map(formatStop)
+			})
+		})
+		.catch(next)
+	})
+
 	const formatConnection = (c) => {
 		return {
 			// todo: url-encode
 			'@id': `${baseUrl}/connections/${c.tripId}/${c.from.id}`,
 			'@type': 'Connection',
-			'departureStop': `${baseUrl}/stops/${c.from.id}`,
-			'arrivalStop': `${baseUrl}/stops/${c.to.id}`,
+			'departureStop': stopUrl(c.from),
+			'arrivalStop': stopUrl(c.to),
 			'departureTime': isoWithTz(c.departure),
 			'arrivalTime': isoWithTz(c.arrival),
 			'departureDelay': c.departureDelay,

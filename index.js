@@ -8,7 +8,8 @@ const min = require('lodash/min')
 const max = require('lodash/max')
 const findStops = require('hafas-find-stations')
 const createFetchConnections = require('./lib/network-wide-connections')
-const jsonLdContext = require('./lib/json-ld-context')
+const connectionsContext = require('./lib/connections-context')
+const stopsContext = require('./lib/stops-context')
 
 const depOf = c => new Date(c.departure) / 1000 | 0
 
@@ -48,7 +49,7 @@ const createServer = (baseUrl, hafas, bbox) => {
 		findStops(hafas, bbox, () => {})
 		.then((stops) => {
 			res.json({
-				'@context': jsonLdContext,
+				'@context': stopsContext,
 				'@id': baseUrl + req.url,
 				'@type': 'hydra:PartialCollectionView',
 				// todo: `hydra:search`
@@ -68,7 +69,8 @@ const createServer = (baseUrl, hafas, bbox) => {
 			'departureTime': isoWithTz(c.departure),
 			'arrivalTime': isoWithTz(c.arrival),
 			'departureDelay': c.departureDelay,
-			'arrivalDelay': c.arrivalDelay
+			'arrivalDelay': c.arrivalDelay,
+			'trip': `${baseUrl}/trips/${c.tripId}`,
 			// todo: `gtfs:trip`, `gtfs:route`
 		}
 	}
@@ -79,14 +81,13 @@ const createServer = (baseUrl, hafas, bbox) => {
 	// - /trip/:id
 	api.get('/connections', (req, res, next) => {
 		if (!('t' in req.query)) {
-			const now = (Date.now() / 1000 | 0)
-			res.redirect('/connections?t=' + now)
+			res.redirect('/connections?t=' + new Date().toISOString())
 			return;
 		}
 
-		const when = parseInt(req.query.t) * 1000
+		const when = new Date(req.query.t)
 		// todo: caching headers
-		fetchConnections(when)
+		fetchConnections(when.getTime())
 		.then((connections) => {
 			if (connections.length === 0) {
 				// todo: what to do in this case?
@@ -99,11 +100,11 @@ const createServer = (baseUrl, hafas, bbox) => {
 			const tPrevious = min(deps) - 10 * 60 // todo: find sth better
 
 			res.json({
-				'@context': jsonLdContext,
+				'@context': connectionsContext,
 				'@id': `${baseUrl}/connections?t=${req.query.t}`,
 				'@type': 'hydra:PartialCollectionView',
-				'hydra:next': `${baseUrl}/connections?t=${tNext}`,
-				'hydra:previous': `${baseUrl}/connections?t=${tPrevious}`,
+				'hydra:next': `${baseUrl}/connections?t=${new Date(tNext * 1000).toISOString()}`,
+				'hydra:previous': `${baseUrl}/connections?t=${new Date(tPrevious * 1000).toISOString()}`,
 				'hydra:search': {
 					'@type': 'hydra:IriTemplate',
 					'hydra:template': `${baseUrl}/connections{?t}`,

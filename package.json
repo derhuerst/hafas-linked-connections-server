@@ -1,11 +1,12 @@
 {
 	"name": "hafas-linked-connections-server",
 	"description": "Create a Linked Connections endpoint from a HAFAS client.",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"main": "index.js",
 	"files": [
 		"index.js",
-		"example.js"
+		"example.js",
+		"lib"
 	],
 	"keywords": [
 		"public transport",

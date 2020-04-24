@@ -140,6 +140,7 @@ const createServer = (baseUrl, hafas, bbox) => {
 	api.use((err, req, res, next) => {
 		console.error(err)
 		if (!res.headersSent) {
+			res.status(err.statusCode || 500)
 			res.json({
 				ok: false,
 				message: err.message,

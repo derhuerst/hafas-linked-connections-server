@@ -37,6 +37,8 @@
 		"hafas-client": "^5"
 	},
 	"devDependencies": {
+		"cached-hafas-client": "^3.1.1",
+		"sqlite3": "^4.1.1",
 		"tap-min": "^2.0.0",
 		"tape": "^4.10.1",
 		"vbb-hafas": "^7.0.2"

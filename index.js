@@ -3,6 +3,7 @@
 const {utcToZonedTime, format} = require('date-fns-tz')
 const express = require('express')
 const cors = require('cors')
+const compression = require('compression')
 const {inspect} = require('util')
 const sortBy = require('lodash/sortBy')
 const min = require('lodash/min')
@@ -26,6 +27,7 @@ const createServer = (baseUrl, hafas, bbox) => {
 	const api = express()
 	api.set('etag', 'strong')
 	api.use(cors())
+	api.use(compression())
 
 	const stopUrl = stop => `${baseUrl}/stops/${stop.id}`
 

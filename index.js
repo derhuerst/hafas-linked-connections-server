@@ -12,6 +12,7 @@ const findStops = require('hafas-find-stations')
 const createFetchConnections = require('./lib/network-wide-connections')
 const connectionsContext = require('./lib/connections-context')
 const stopsContext = require('./lib/stops-context')
+const hydraTemplate = require('./lib/hydra-template')
 
 const depOf = c => new Date(c.departure || c.plannedDeparture) / 1000 | 0
 
@@ -119,17 +120,9 @@ const createServer = (baseUrl, hafas, bbox) => {
 				'@type': 'hydra:PartialCollectionView',
 				'hydra:next': `${baseUrl}/connections?t=${new Date(tNext * 1000).toISOString()}`,
 				'hydra:previous': `${baseUrl}/connections?t=${new Date(tPrevious * 1000).toISOString()}`,
-				'hydra:search': {
-					'@type': 'hydra:IriTemplate',
-					'hydra:template': `${baseUrl}/connections{?t}`,
-					'hydra:variableRepresentation': 'hydra:BasicRepresentation',
-					'hydra:mapping': {
-						'@type': 'IriTemplateMapping',
-						'hydra:variable': 't',
-						'hydra:required': true,
-						'hydra:property': 'lc:departureTimeQuery'
-					}
-				},
+				'hydra:search': hydraTemplate(`${baseUrl}/connections{?t}`, [
+					['t', 'lc:departureTimeQuery', true],
+				]),
 				'@graph': sortBy(connections, depOf).map(formatConnection)
 			})
 		})

@@ -11,7 +11,7 @@ const max = require('lodash/max')
 const findStops = require('hafas-find-stations')
 const createFetchConnections = require('./lib/network-wide-connections')
 const connectionsContext = require('./lib/connections-context')
-const stopsContext = require('./lib/stops-context')
+const stopContext = require('./lib/stop-context')
 const hydraTemplate = require('./lib/hydra-template')
 
 const depOf = c => new Date(c.departure || c.plannedDeparture) / 1000 | 0
@@ -33,11 +33,25 @@ const createServer = (baseUrl, hafas, bbox) => {
 	const stopUrl = stop => `${baseUrl}/stops/${stop.id}`
 
 	const formatStop = (stop) => ({
+		// todo: use some kind of canonical URL of the stop here
 		'@id': stopUrl(stop),
 		// todo: `dct:spatial`
 		latitude: stop.location.latitude + '',
 		longitude: stop.location.longitude + '',
 		name: stop.name
+	})
+
+	api.get('/stops/:id', (req, res, next) => {
+		const {id} = req.params
+
+		hafas.stop(id)
+		.then((stop) => {
+			res.json({
+				'@context': stopContext,
+				...formatStop(stop),
+			})
+		})
+		.catch(next)
 	})
 
 	api.get('/stops', (req, res, next) => {
@@ -53,7 +67,7 @@ const createServer = (baseUrl, hafas, bbox) => {
 		findStops(hafas, bbox, () => {})
 		.then((stops) => {
 			res.json({
-				'@context': stopsContext,
+				'@context': stopContext,
 				'@id': baseUrl + req.url,
 				'@type': 'hydra:PartialCollectionView',
 				// todo: `hydra:search`

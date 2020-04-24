@@ -11,7 +11,7 @@ const createFetchConnections = require('./lib/network-wide-connections')
 const connectionsContext = require('./lib/connections-context')
 const stopsContext = require('./lib/stops-context')
 
-const depOf = c => new Date(c.departure) / 1000 | 0
+const depOf = c => new Date(c.departure || c.plannedDeparture) / 1000 | 0
 
 const timezone = 'Europe/Berlin' // todo: make customisable
 const isoWithTz = (t) => {

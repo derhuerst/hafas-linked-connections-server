@@ -4,6 +4,7 @@ const {utcToZonedTime, format} = require('date-fns-tz')
 const express = require('express')
 const cors = require('cors')
 const {inspect} = require('util')
+const sortBy = require('lodash/sortBy')
 const min = require('lodash/min')
 const max = require('lodash/max')
 const findStops = require('hafas-find-stations')
@@ -23,6 +24,7 @@ const createServer = (baseUrl, hafas, bbox) => {
 	const fetchConnections = createFetchConnections(hafas, bbox)
 
 	const api = express()
+	api.set('etag', 'strong')
 	api.use(cors())
 
 	const stopUrl = stop => `${baseUrl}/stops/${stop.id}`
@@ -53,7 +55,7 @@ const createServer = (baseUrl, hafas, bbox) => {
 				'@id': baseUrl + req.url,
 				'@type': 'hydra:PartialCollectionView',
 				// todo: `hydra:search`
-				'@graph': stops.map(formatStop)
+				'@graph': sortBy(stops, ['id']).map(formatStop)
 			})
 		})
 		.catch(next)
@@ -84,9 +86,20 @@ const createServer = (baseUrl, hafas, bbox) => {
 			res.redirect('/connections?t=' + new Date().toISOString())
 			return;
 		}
+		const rawWhen = Date.parse(req.query.t)
+		if (Number.isNaN(rawWhen)) {
+			const err = new Error('invalid t')
+			err.statusCode = 400
+			return next(err)
+		}
+		const when = new Date(Math.round(rawWhen / 1000) * 1000)
+		if (when.toISOString() !== req.query.t) {
+			const whenIso = new Date(when).toISOString()
+			res.redirect(301, '/connections?t=' + whenIso)
+			return;
+		}
 
-		const when = new Date(req.query.t)
-		// todo: caching headers
+		// todo: caching headers (e.g. from cached-hafas-client)
 		fetchConnections(when.getTime())
 		.then((connections) => {
 			if (connections.length === 0) {
@@ -95,7 +108,7 @@ const createServer = (baseUrl, hafas, bbox) => {
 				res.json({})
 			}
 
-			const deps = connections.filter(c => !!c.departure).map(depOf)
+			const deps = connections.map(depOf).filter(t => !Number.isNaN(t))
 			const tNext = max(deps)
 			const tPrevious = min(deps) - 10 * 60 // todo: find sth better
 
@@ -116,7 +129,7 @@ const createServer = (baseUrl, hafas, bbox) => {
 						'hydra:property': 'lc:departureTimeQuery'
 					}
 				},
-				'@graph': connections.map(formatConnection)
+				'@graph': sortBy(connections, depOf).map(formatConnection)
 			})
 		})
 		.catch(next)

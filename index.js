@@ -47,7 +47,6 @@ const createServer = (baseUrl, hafas, bbox) => {
 			south: p.south ? parseFloat(p.south) : bbox.south,
 			east: p.east ? parseFloat(p.east) : bbox.east
 		}
-		console.error('bbox', bbox)
 
 		// todo: put caching
 		findStops(hafas, bbox, () => {})

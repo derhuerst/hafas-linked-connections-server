@@ -37,6 +37,8 @@ const server = createServer(baseUrl, client, bbox)
 server.listen(3000)
 ```
 
+*Note:* Because linked open data tools tend to re-fetch resources often, I strongly recommend to use `hafas-linked-connections-server` with [`cached-hafas-client`](https://github.com/public-transport/cached-hafas-client). [`example.js`](example.js) shows how to do it.
+
 
 ## Contributing
 

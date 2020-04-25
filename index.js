@@ -46,6 +46,7 @@ const createServer = (baseUrl, hafas, bbox) => {
 
 		hafas.stop(id)
 		.then((stop) => {
+			res.type('application/ld+json')
 			res.json({
 				'@context': stopContext,
 				...formatStop(stop),
@@ -55,7 +56,7 @@ const createServer = (baseUrl, hafas, bbox) => {
 	})
 
 	api.get('/stops', (req, res, next) => {
-		const p = req.params
+		const p = req.query
 		const _bbox = {
 			north: p.north ? parseFloat(p.north) : bbox.north,
 			west: p.west ? parseFloat(p.west) : bbox.west,
@@ -63,9 +64,9 @@ const createServer = (baseUrl, hafas, bbox) => {
 			east: p.east ? parseFloat(p.east) : bbox.east
 		}
 
-		// todo: put caching
 		findStops(hafas, bbox, () => {})
 		.then((stops) => {
+			res.type('application/ld+json')
 			res.json({
 				'@context': stopContext,
 				'@id': baseUrl + req.url,
@@ -128,13 +129,15 @@ const createServer = (baseUrl, hafas, bbox) => {
 			const tNext = max(deps)
 			const tPrevious = min(deps) - 10 * 60 // todo: find sth better
 
+			const self = `${baseUrl}/connections`
+			res.type('application/ld+json')
 			res.json({
 				'@context': connectionsContext,
-				'@id': `${baseUrl}/connections?t=${req.query.t}`,
+				'@id': `${self}?t=${req.query.t}`,
 				'@type': 'hydra:PartialCollectionView',
-				'hydra:next': `${baseUrl}/connections?t=${new Date(tNext * 1000).toISOString()}`,
-				'hydra:previous': `${baseUrl}/connections?t=${new Date(tPrevious * 1000).toISOString()}`,
-				'hydra:search': hydraTemplate(`${baseUrl}/connections{?t}`, [
+				'hydra:next': `${self}?t=${new Date(tNext * 1000).toISOString()}`,
+				'hydra:previous': `${self}?t=${new Date(tPrevious * 1000).toISOString()}`,
+				'hydra:search': hydraTemplate(`${self}{?t}`, [
 					['t', 'lc:departureTimeQuery', true],
 				]),
 				'@graph': sortBy(connections, depOf).map(formatConnection)

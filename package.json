@@ -31,7 +31,7 @@
 		"date-fns-tz": "^1.0.7",
 		"express": "^4.17.1",
 		"hafas-find-stations": "^2.1.0",
-		"hafas-monitor-trips": "^3.0.0",
+		"hafas-monitor-trips": "^4.0.1",
 		"lodash": "^4.17.15",
 		"p-queue": "^6.1.1"
 	},
@@ -40,9 +40,9 @@
 	},
 	"devDependencies": {
 		"cached-hafas-client": "^3.1.1",
-		"sqlite3": "^4.1.1",
+		"sqlite3": "^5.0.0",
 		"tap-min": "^2.0.0",
-		"tape": "^4.10.1",
+		"tape": "^5.0.1",
 		"vbb-hafas": "^7.0.2"
 	},
 	"scripts": {

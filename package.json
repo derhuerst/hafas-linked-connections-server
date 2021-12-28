@@ -1,7 +1,7 @@
 {
 	"name": "hafas-linked-connections-server",
 	"description": "Create a Linked Connections endpoint from a HAFAS client.",
-	"version": "1.2.1",
+	"version": "2.0.0",
 	"main": "index.js",
 	"files": [
 		"index.js",
@@ -22,7 +22,7 @@
 	"bugs": "https://github.com/derhuerst/hafas-linked-connections-server/issues",
 	"license": "ISC",
 	"engines": {
-		"node": ">=10"
+		"node": ">=14"
 	},
 	"dependencies": {
 		"compression": "^1.7.4",
@@ -31,7 +31,7 @@
 		"date-fns-tz": "^1.0.7",
 		"express": "^4.17.1",
 		"hafas-find-stations": "^2.1.0",
-		"hafas-monitor-trips": "^4.0.1",
+		"hafas-monitor-trips": "^5.0.0",
 		"lodash": "^4.17.15",
 		"p-queue": "^6.1.1"
 	},
@@ -39,7 +39,7 @@
 		"hafas-client": "^5"
 	},
 	"devDependencies": {
-		"cached-hafas-client": "^3.1.1",
+		"cached-hafas-client": "^4.0.5",
 		"sqlite3": "^5.0.0",
 		"tap-min": "^2.0.0",
 		"tape": "^5.0.1",

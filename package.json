@@ -40,13 +40,15 @@
 	},
 	"devDependencies": {
 		"cached-hafas-client": "^4.0.5",
+		"eslint": "^8.5.0",
 		"sqlite3": "^5.0.0",
 		"tap-min": "^2.0.0",
 		"tape": "^5.0.1",
 		"vbb-hafas": "^7.0.2"
 	},
 	"scripts": {
+		"lint": "eslint .",
 		"test": "env NODE_ENV=dev node test.js | tap-min",
-		"prepublishOnly": "npm test"
+		"prepublishOnly": "npm run lint && npm test"
 	}
 }

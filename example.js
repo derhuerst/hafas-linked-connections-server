@@ -7,6 +7,8 @@ const sqliteStore = require('cached-hafas-client/stores/sqlite')
 const withCaching = require('cached-hafas-client')
 const createServer = require('.')
 
+const SECOND = 1000
+
 const BASE_URL = 'http://localhost:3000/'
 const BBOX = {
 	north: 52.53,
@@ -25,7 +27,13 @@ const hafas = createHafas({
 }, 'overwritten-anyways')
 
 const db = new sqlite3.Database('example-cache.sqlite')
-const client = withCaching(hafas, sqliteStore(db))
+const client = withCaching(hafas, sqliteStore(db), {
+	cachePeriods: {
+		trip: 60 * SECOND,
+		radar: 30 * SECOND,
+		stop: 60 * 60 * SECOND,
+	},
+})
 
 const server = createServer(BASE_URL, client, BBOX)
 server.listen(3000)

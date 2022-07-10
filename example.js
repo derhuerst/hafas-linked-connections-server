@@ -15,7 +15,14 @@ const BBOX = {
 	east: 13.43
 }
 
-const hafas = createHafas(vbbProfile, 'hafas-linked-connections-server')
+const transformReq = (ctx, req) => {
+	req.headers['user-agent'] = 'App/4.5.1 (iPhone; iOS 14.8.1; Scale/3.00)'
+	return req
+}
+const hafas = createHafas({
+	...vbbProfile,
+	transformReq,
+}, 'overwritten-anyways')
 
 const db = new sqlite3.Database('example-cache.sqlite')
 const client = withCaching(hafas, sqliteStore(db))

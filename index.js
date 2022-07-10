@@ -95,7 +95,6 @@ const createServer = (baseUrl, hafas, bbox) => {
 	}
 
 	// todo:
-	// - /connections/:trip-id/:from-stop
 	// - /stops/:id
 	// - /trip/:id
 	api.get('/connections', (req, res, next) => {
@@ -141,6 +140,51 @@ const createServer = (baseUrl, hafas, bbox) => {
 					['t', 'lc:departureTimeQuery', true],
 				]),
 				'@graph': sortBy(connections, depOf).map(formatConnection)
+			})
+		})
+		.catch(next)
+	})
+
+	// todo: some trips visit a stop more than once, add planned departure time?
+	api.get('/connections/:tripId/:fromStop', (req, res, next) => {
+		const {tripId, fromStop} = req.params
+
+		hafas.trip(tripId, 'foo')
+		.then((trip) => {
+			const stI = trip.stopovers.findIndex(st => (
+				st.stop.id === fromStop ||
+				(st.stop.station && st.stop.station.id === fromStop)
+			))
+			if (stI < 0) {
+				res.status(404)
+				res.json({})
+				return // todo: write error-log
+			}
+			const st = trip.stopovers[stI]
+			const nSt = trip.stopovers[stI + 1]
+			if (!nSt) {
+				res.status(404)
+				res.json({})
+				return // todo: write error-log
+			}
+
+			const connection = formatConnection({
+				tripId: trip.id,
+				direction: trip.direction,
+				from: st.stop,
+				departure: st.departure,
+				departureDelay: st.departureDelay,
+				departurePlatform: st.departurePlatform,
+				to: nSt.stop,
+				arrival: nSt.arrival,
+				arrivalDelay: nSt.arrivalDelay,
+				arrivalPlatform: nSt.arrivalPlatform,
+			})
+
+			res.type('application/ld+json')
+			res.json({
+				'@context': connectionsContext,
+				...connection,
 			})
 		})
 		.catch(next)

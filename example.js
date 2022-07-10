@@ -1,6 +1,7 @@
 'use strict'
 
-const createClient = require('vbb-hafas')
+const createHafas = require('hafas-client')
+const vbbProfile = require('hafas-client/p/vbb')
 const sqlite3 = require('sqlite3')
 const sqliteStore = require('cached-hafas-client/stores/sqlite')
 const withCaching = require('cached-hafas-client')
@@ -14,7 +15,7 @@ const BBOX = {
 	east: 13.43
 }
 
-const hafas = createClient('hafas-linked-connections-server')
+const hafas = createHafas(vbbProfile, 'hafas-linked-connections-server')
 
 const db = new sqlite3.Database('example-cache.sqlite')
 const client = withCaching(hafas, sqliteStore(db))

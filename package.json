@@ -41,10 +41,10 @@
 	"devDependencies": {
 		"cached-hafas-client": "^4.0.5",
 		"eslint": "^8.5.0",
+		"hafas-client": "^5.24.1",
 		"sqlite3": "^5.0.0",
 		"tap-min": "^2.0.0",
-		"tape": "^5.0.1",
-		"vbb-hafas": "^7.0.2"
+		"tape": "^5.0.1"
 	},
 	"scripts": {
 		"lint": "eslint .",

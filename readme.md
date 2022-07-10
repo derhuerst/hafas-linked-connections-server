@@ -20,8 +20,11 @@ npm install hafas-linked-connections-server
 ```js
 'use strict'
 
-const createClient = require('vbb-hafas')
+const createHafasClient = require('hafas-client')
+const vbbProfile = require('hafas-client/p/vbb')
 const createServer = require('hafas-linked-connections-server.')
+
+const hafasClient = createHafasClient(vbbProfile, 'my awesome program')
 
 const baseUrl = 'https://my-linked-connections-endpoint/'
 const bbox = { // Berlin
@@ -31,8 +34,7 @@ const bbox = { // Berlin
 	east: 13.43
 }
 
-const client = createClient('my awesome program')
-const server = createServer(baseUrl, client, bbox)
+const server = createServer(baseUrl, hafasClient, bbox)
 server.listen(3000)
 ```
 

@@ -166,8 +166,8 @@ test('/connections/:tripId/:fromStop/:plannedDeparture', async (t) => {
 	const conUrl = [
 		BASE_URL,
 		'connections',
-		TRIP_ID,
-		B.id,
+		encodeURIComponent(TRIP_ID),
+		encodeURIComponent(B.id),
 		Date.parse(SECOND_STOPOVER_AT_B.plannedDeparture),
 	].join('/')
 
@@ -176,13 +176,13 @@ test('/connections/:tripId/:fromStop/:plannedDeparture', async (t) => {
 		'@context': CONNECTION_CONTEXT,
 		'@id': conUrl,
 		'@type': 'Connection',
-		departureStop: BASE_URL + '/stops/stop$B',
-		arrivalStop: BASE_URL + '/stops/stop$D',
+		departureStop: BASE_URL + '/stops/stop%24B',
+		arrivalStop: BASE_URL + '/stops/stop%24D',
 		departureTime: '2011-11-11T19:18:10+01:00',
 		arrivalTime: '2011-11-11T20:20:20+01:00',
 		departureDelay: 60 * 60 + 10,
 		arrivalDelay: 20,
-		trip: BASE_URL + '/trips/trip$1',
+		trip: BASE_URL + '/trips/trip%241',
 	}, 'invalid connection')
 
 	await stop()

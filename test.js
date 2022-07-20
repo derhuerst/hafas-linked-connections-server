@@ -85,6 +85,17 @@ const B = {
 	name: 'B',
 	location: {type: 'location', latitude: 3.3, longitude: 4.4},
 }
+const SECOND_STOPOVER_AT_B = {
+	stop: B,
+	arrival: '2011-11-11T17:17:33+01:00',
+	arrivalDelay: 33,
+	plannedArrival: '2011-11-11T17:17:00+01:00',
+	arrivalPlatform: '10',
+	departure: '2011-11-11T19:18:10+01:00',
+	departureDelay: 60 * 60 + 10,
+	plannedDeparture: '2011-11-11T18:18:00+01:00',
+	departurePlatform: '1',
+}
 const TRIP1 = {
 	id: TRIP_ID,
 	directions: 'Foo Bar',
@@ -98,9 +109,9 @@ const TRIP1 = {
 		arrivalDelay: 2 * 60,
 		plannedArrival: '2011-11-11T11:11:00+01:00',
 		arrivalPlatform: '2a',
-		departure: '2011-12-12T12:11:30+01:00',
+		departure: '2011-11-11T12:11:30+01:00',
 		departureDelay: -30,
-		plannedDeparture: '2011-12-12T12:12:00+01:00',
+		plannedDeparture: '2011-11-11T12:12:00+01:00',
 		departurePlatform: null,
 	}, {
 		stop: B,
@@ -126,6 +137,20 @@ const TRIP1 = {
 		departureDelay: 0,
 		plannedDeparture: '2011-11-11T16:16:00+01:00',
 		departurePlatform: null,
+	}, SECOND_STOPOVER_AT_B, {
+		stop: {
+			id: 'stop$D',
+			name: 'D station',
+			location: {type: 'location', latitude: 5.5, longitude: 6.6},
+		},
+		arrival: '2011-11-11T20:20:20+01:00',
+		arrivalDelay: 20,
+		plannedArrival: '2011-11-11T20:20:00+01:00',
+		arrivalPlatform: '2-0',
+		departure: null,
+		departureDelay: null,
+		plannedDeparture: null,
+		departurePlatform: null,
 	}],
 }
 
@@ -138,23 +163,25 @@ test('/connections/:tripId/:fromStop/:plannedDeparture', async (t) => {
 		trip: mockedTrip,
 	}, BBOX)
 
-	const con = await fetchJSON([
+	const conUrl = [
 		BASE_URL,
 		'connections',
 		TRIP_ID,
 		B.id,
-	].join('/'))
+		Date.parse(SECOND_STOPOVER_AT_B.plannedDeparture),
+	].join('/')
 
+	const con = await fetchJSON(conUrl)
 	t.deepEqual(con, {
 		'@context': CONNECTION_CONTEXT,
-		'@id': BASE_URL + '/connections/trip$1/stop$B',
+		'@id': conUrl,
 		'@type': 'Connection',
 		departureStop: BASE_URL + '/stops/stop$B',
-		arrivalStop: BASE_URL + '/stops/stop$C',
-		departureTime: '2011-11-11T15:14:10+01:00',
+		arrivalStop: BASE_URL + '/stops/stop$D',
+		departureTime: '2011-11-11T19:18:10+01:00',
+		arrivalTime: '2011-11-11T20:20:20+01:00',
 		departureDelay: 60 * 60 + 10,
-		arrivalTime: '2011-11-11T15:15:00+01:00',
-		arrivalDelay: 0,
+		arrivalDelay: 20,
 		trip: BASE_URL + '/trips/trip$1',
 	}, 'invalid connection')
 

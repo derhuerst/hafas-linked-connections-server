@@ -79,9 +79,12 @@ const createServer = (baseUrl, hafas, bbox) => {
 	})
 
 	const formatConnection = (c) => {
+		const normalizedDep = c.plannedDeparture
+			? +Date.parse(c.plannedDeparture) // todo: tz
+			: '-' // todo: fall back to stopovers[] index?
 		return {
 			// todo: url-encode
-			'@id': `${baseUrl}/connections/${c.tripId}/${c.from.id}`,
+			'@id': `${baseUrl}/connections/${c.tripId}/${c.from.id}/${normalizedDep}`,
 			'@type': 'Connection',
 			'departureStop': stopUrl(c.from),
 			'arrivalStop': stopUrl(c.to),
@@ -146,14 +149,18 @@ const createServer = (baseUrl, hafas, bbox) => {
 	})
 
 	// todo: some trips visit a stop more than once, add planned departure time?
-	api.get('/connections/:tripId/:fromStop', (req, res, next) => {
+	api.get('/connections/:tripId/:fromStop/:plannedDeparture', (req, res, next) => {
 		const {tripId, fromStop} = req.params
+		const plannedDep = parseInt(req.params.plannedDeparture)
 
 		hafas.trip(tripId, 'foo')
 		.then((trip) => {
 			const stI = trip.stopovers.findIndex(st => (
-				st.stop.id === fromStop ||
-				(st.stop.station && st.stop.station.id === fromStop)
+				(
+					st.stop.id === fromStop ||
+					(st.stop.station && st.stop.station.id === fromStop)
+				) &&
+				(st.plannedDeparture && Date.parse(st.plannedDeparture) === plannedDep)
 			))
 			if (stI < 0) {
 				res.status(404)
@@ -174,10 +181,12 @@ const createServer = (baseUrl, hafas, bbox) => {
 				from: st.stop,
 				departure: st.departure,
 				departureDelay: st.departureDelay,
+				plannedDeparture: st.plannedDeparture,
 				departurePlatform: st.departurePlatform,
 				to: nSt.stop,
 				arrival: nSt.arrival,
 				arrivalDelay: nSt.arrivalDelay,
+				plannedArrival: st.plannedArrival,
 				arrivalPlatform: nSt.arrivalPlatform,
 			})
 

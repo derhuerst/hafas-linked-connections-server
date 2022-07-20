@@ -1,6 +1,6 @@
 'use strict'
 
-const {utcToZonedTime, format} = require('date-fns-tz')
+const {formatInTimeZone} = require('date-fns-tz')
 const express = require('express')
 const cors = require('cors')
 const compression = require('compression')
@@ -18,7 +18,7 @@ const depOf = c => new Date(c.departure || c.plannedDeparture) / 1000 | 0
 
 const timezone = 'Europe/Berlin' // todo: make customisable
 const isoWithTz = (t) => {
-	return format(utcToZonedTime(new Date(t), timezone), `yyyy-MM-dd'T'HH:mm:ssXXX`)
+	return formatInTimeZone(new Date(t), timezone, `yyyy-MM-dd'T'HH:mm:ssXXX`)
 }
 
 const createServer = (baseUrl, hafas, bbox) => {

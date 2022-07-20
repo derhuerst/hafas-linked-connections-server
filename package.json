@@ -39,7 +39,7 @@
 		"hafas-client": "^5"
 	},
 	"devDependencies": {
-		"cached-hafas-client": "^4.0.5",
+		"cached-hafas-client": "^4.1.0",
 		"eslint": "^8.5.0",
 		"hafas-client": "^5.24.1",
 		"sqlite3": "^5.0.0",

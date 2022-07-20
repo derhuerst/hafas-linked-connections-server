@@ -30,7 +30,7 @@ const createServer = (baseUrl, hafas, bbox) => {
 	api.use(cors())
 	api.use(compression())
 
-	const stopUrl = stop => `${baseUrl}/stops/${stop.id}`
+	const stopUrl = stop => `${baseUrl}/stops/${encodeURIComponent(stop.id)}`
 
 	const formatStop = (stop) => ({
 		// todo: use some kind of canonical URL of the stop here
@@ -79,9 +79,16 @@ const createServer = (baseUrl, hafas, bbox) => {
 	})
 
 	const formatConnection = (c) => {
+		const normalizedDep = c.plannedDeparture
+			? +Date.parse(c.plannedDeparture) // todo: tz
+			: '-' // todo: fall back to stopovers[] index?
 		return {
-			// todo: url-encode
-			'@id': `${baseUrl}/connections/${c.tripId}/${c.from.id}`,
+			'@id': [
+				baseUrl,
+				'connections', encodeURIComponent(c.tripId),
+				encodeURIComponent(c.from.id),
+				normalizedDep,
+			].join('/'),
 			'@type': 'Connection',
 			'departureStop': stopUrl(c.from),
 			'arrivalStop': stopUrl(c.to),
@@ -89,18 +96,17 @@ const createServer = (baseUrl, hafas, bbox) => {
 			'arrivalTime': isoWithTz(c.arrival),
 			'departureDelay': c.departureDelay,
 			'arrivalDelay': c.arrivalDelay,
-			'trip': `${baseUrl}/trips/${c.tripId}`,
+			'trip': `${baseUrl}/trips/${encodeURIComponent(c.tripId)}`,
 			// todo: `gtfs:trip`, `gtfs:route`
 		}
 	}
 
 	// todo:
-	// - /connections/:trip-id/:from-stop
 	// - /stops/:id
 	// - /trip/:id
 	api.get('/connections', (req, res, next) => {
 		if (!('t' in req.query)) {
-			res.redirect('/connections?t=' + new Date().toISOString())
+			res.redirect('/connections?t=' + encodeURIComponent(new Date().toISOString()))
 			return;
 		}
 		const rawWhen = Date.parse(req.query.t)
@@ -112,7 +118,7 @@ const createServer = (baseUrl, hafas, bbox) => {
 		const when = new Date(Math.round(rawWhen / 1000) * 1000)
 		if (when.toISOString() !== req.query.t) {
 			const whenIso = new Date(when).toISOString()
-			res.redirect(301, '/connections?t=' + whenIso)
+			res.redirect(301, '/connections?t=' + encodeURIComponent(whenIso))
 			return;
 		}
 
@@ -133,7 +139,7 @@ const createServer = (baseUrl, hafas, bbox) => {
 			res.type('application/ld+json')
 			res.json({
 				'@context': connectionsContext,
-				'@id': `${self}?t=${req.query.t}`,
+				'@id': `${self}?t=${encodeURIComponent(req.query.t)}`,
 				'@type': 'hydra:PartialCollectionView',
 				'hydra:next': `${self}?t=${new Date(tNext * 1000).toISOString()}`,
 				'hydra:previous': `${self}?t=${new Date(tPrevious * 1000).toISOString()}`,
@@ -141,6 +147,57 @@ const createServer = (baseUrl, hafas, bbox) => {
 					['t', 'lc:departureTimeQuery', true],
 				]),
 				'@graph': sortBy(connections, depOf).map(formatConnection)
+			})
+		})
+		.catch(next)
+	})
+
+	// todo: some trips visit a stop more than once, add planned departure time?
+	api.get('/connections/:tripId/:fromStop/:plannedDeparture', (req, res, next) => {
+		const {tripId, fromStop} = req.params
+		const plannedDep = parseInt(req.params.plannedDeparture)
+
+		hafas.trip(tripId, 'foo')
+		.then((trip) => {
+			const stI = trip.stopovers.findIndex(st => (
+				(
+					st.stop.id === fromStop ||
+					(st.stop.station && st.stop.station.id === fromStop)
+				) &&
+				(st.plannedDeparture && Date.parse(st.plannedDeparture) === plannedDep)
+			))
+			if (stI < 0) {
+				res.status(404)
+				res.json({})
+				return // todo: write error-log
+			}
+			const st = trip.stopovers[stI]
+			const nSt = trip.stopovers[stI + 1]
+			if (!nSt) {
+				res.status(404)
+				res.json({})
+				return // todo: write error-log
+			}
+
+			const connection = formatConnection({
+				tripId: trip.id,
+				direction: trip.direction,
+				from: st.stop,
+				departure: st.departure,
+				departureDelay: st.departureDelay,
+				plannedDeparture: st.plannedDeparture,
+				departurePlatform: st.departurePlatform,
+				to: nSt.stop,
+				arrival: nSt.arrival,
+				arrivalDelay: nSt.arrivalDelay,
+				plannedArrival: st.plannedArrival,
+				arrivalPlatform: nSt.arrivalPlatform,
+			})
+
+			res.type('application/ld+json')
+			res.json({
+				'@context': connectionsContext,
+				...connection,
 			})
 		})
 		.catch(next)
